@@ -1,5 +1,5 @@
 streamlit
-openai
-langchain
-langchain-community
+openai>=1.0.0
+langchain>=0.1.14
+langchain-community>0.0.30
 python-dotenv
