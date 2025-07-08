@@ -45,7 +45,7 @@ if st.button("Generate Letter"):
         summary_prompt = PromptTemplate(
             input_variables=["description"],
             template="""
-Summarize the legal issue in 1-2 sentences clearly and formally:
+Summarize the legal issue in 2-3 sentences clearly and formally:
 
 Description: {description}
             """
@@ -70,8 +70,8 @@ Draft a {letter_type} based on the following:
 - Opponent Address: {opponent_address}
 - Summary of Issue: {summary}
 
-If 'acting_as' is 'Myself', the letter should be written in first person ("I am writing...").
-If 'acting_as' is 'On behalf of a client', the letter should be written in third person ("I am writing on behalf of my client...").
+If 'acting_as' is 'Myself', the letter should be written in first person's perspective.
+If 'acting_as' is 'On behalf of a client', the letter should be written in third person's perspective.
 
 Write this as a formal letter with:
 - Date and subject
