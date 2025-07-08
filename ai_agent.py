@@ -16,7 +16,7 @@ llm = ChatOpenAI(
 # Page Config
 st.set_page_config(page_title="AI Legal Triage Agent", layout="wide")
 st.title("🧑‍⚖️ AI Legal Triage Agent – Initial Legal Help")
-st.caption("⚠️ This tool is for general information and letter drafting only. Not legal advice. 😊")
+st.caption("⚠️ For demo purposes only. Use at your own risk. Tool may not work if my API credits run out! 😊")
 
 # Step 1: Select Legal Topic
 topic = st.selectbox("Select your legal issue:", ["Tenancy Dispute", "Employment Issue", "Contract Breach", "Others"])
