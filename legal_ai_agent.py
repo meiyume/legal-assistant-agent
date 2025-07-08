@@ -109,7 +109,7 @@ Write a clear and professional letter including:
 - Proper salutation
 - Body with issue background, action requested, and any deadlines
 - Closing and polite sign-off
-Do not include placeholder text like [Law Firm Letterhead] or [Law Firm Name] unless specifically instructed.
+Do not include placeholder text like [Law Firm Letterhead] or [Law Firm Name] unless the letter is written by legal assistant working at a law firm.
             """
         )
 
