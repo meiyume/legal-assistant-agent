@@ -2,7 +2,7 @@ import streamlit as st
 from openai import OpenAI
 from langchain.llms import OpenAI as LangOpenAI
 from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
+from langchain.chains import SequentialChain, LLMChain
 import datetime
 
 # Load API key securely
@@ -41,38 +41,61 @@ if st.button("Generate Letter"):
     if not (user_name and opponent_name and description and client_name and client_address):
         st.error("Please complete all required fields.")
     else:
-        template = PromptTemplate(
-            input_variables=["client_name", "client_address", "user_name", "user_address", "opponent_name", "opponent_address", "description", "letter_type", "topic", "event_date"],
+        summary_prompt = PromptTemplate(
+            input_variables=["description"],
             template="""
-You are a legal assistant.
-Write a {letter_type} based on the following:
-- Topic: {topic}
-- Date of Issue: {event_date}
-- From: {client_name}  
-- Client Address: {client_address}  
-- Prepared by: {user_name} ({user_address})  
-- To: {opponent_name}  
-- Opponent Address: {opponent_address}  
-- Description: {description}
+Summarize the legal issue in 1-2 sentences clearly and formally:
 
-Structure it formally with date, subject, salutation, body, and closing.
+Description: {description}
             """
         )
 
-        chain = LLMChain(llm=llm, prompt=template)
-        response = chain.run({
+        summary_chain = LLMChain(llm=llm, prompt=summary_prompt, output_key="summary")
+
+        letter_prompt = PromptTemplate(
+            input_variables=["summary", "client_name", "client_address", "user_name", "user_address", "opponent_name", "opponent_address", "letter_type", "topic", "event_date"],
+            template="""
+You are a legal assistant.
+Draft a {letter_type} based on the following:
+- Topic: {topic}
+- Date of Issue: {event_date}
+- From: {client_name}
+- Client Address: {client_address}
+- Prepared by: {user_name} ({user_address})
+- To: {opponent_name}
+- Opponent Address: {opponent_address}
+- Summary of Issue: {summary}
+
+Write this as a formal letter with:
+- Date and subject
+- Salutation
+- Body with context, action demanded, and timeframe
+- Closing statement and sign-off
+            """
+        )
+
+        letter_chain = LLMChain(llm=llm, prompt=letter_prompt, output_key="letter")
+
+        overall_chain = SequentialChain(
+            chains=[summary_chain, letter_chain],
+            input_variables=["description", "client_name", "client_address", "user_name", "user_address", "opponent_name", "opponent_address", "letter_type", "topic", "event_date"],
+            output_variables=["summary", "letter"]
+        )
+
+        result = overall_chain.run({
+            "description": description,
             "client_name": client_name,
             "client_address": client_address,
             "user_name": user_name,
             "user_address": user_address,
             "opponent_name": opponent_name,
             "opponent_address": opponent_address,
-            "description": description,
             "letter_type": letter_type,
             "topic": topic,
             "event_date": str(event_date)
         })
 
         st.subheader("📄 Generated Letter")
-        st.code(response, language='markdown')
-        st.download_button("Download as .txt", response, file_name="generated_letter.txt")
+        st.code(result["letter"], language='markdown')
+        st.download_button("Download as .txt", result["letter"], file_name="generated_letter.txt")
+
