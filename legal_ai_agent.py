@@ -1,13 +1,13 @@
 import streamlit as st
 from openai import OpenAI
-from langchain.llms import OpenAI as LangOpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import SequentialChain, LLMChain
 import datetime
 
 # Load API key securely
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-llm = LangOpenAI(
+llm = ChatOpenAI(
     openai_api_key=st.secrets["OPENAI_API_KEY"],
     temperature=0.4,
     model_name="gpt-3.5-turbo"
