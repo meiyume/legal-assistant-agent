@@ -21,12 +21,17 @@ st.caption("⚠️ This tool is for general information and letter drafting only
 # Step 1: Select Legal Topic
 topic = st.selectbox("Select your legal issue:", ["Tenancy Dispute", "Employment Issue", "Contract Breach", "Others"])
 
-# Step 2: User Inputs
-acting_as = st.radio("Are you writing this letter in your own name or on behalf of a client?", ["Myself", "On behalf of a client"])
+# Step 2: Writer Role Selection
+role_type = st.radio("Who is writing this letter?", [
+    "Individual writing for myself",
+    "Non-legal individual writing on behalf of someone",
+    "Legal assistant working for a law firm"
+])
+
+# Step 3: User Inputs
 user_name = st.text_input("Your Full Name")
 user_address = st.text_input("Your Address")
-
-if acting_as == "On behalf of a client":
+if role_type != "Individual writing for myself":
     client_name = st.text_input("Client's Full Name")
     client_address = st.text_input("Client's Address")
 else:
@@ -39,40 +44,49 @@ description = st.text_area("Briefly describe the issue:")
 event_date = st.date_input("When did the issue occur?", datetime.date.today())
 letter_type = st.radio("Generate: ", ["Letter of Demand", "Complaint Letter"])
 
-# Step 3: Generate Letter
+# Step 4: Generate Letter
 if st.button("Generate Letter"):
     if not (user_name and opponent_name and description and client_name and client_address):
         st.error("Please complete all required fields.")
     else:
-        # Build dynamic parts of the letter
-        if acting_as == "Myself":
+        # Identity & tone logic
+        if role_type == "Individual writing for myself":
             sender_identity = f"{client_name}\n{client_address}"
             intro_line = f"I am writing regarding the following matter."
+            role_instruction = "The letter is written by an individual on their own behalf. Use first-person language and DO NOT include references to law firms or legal representation."
+        elif role_type == "Non-legal individual writing on behalf of someone":
+            sender_identity = f"{client_name}\n{client_address}\n(c/o {user_name}, {user_address})"
+            intro_line = f"I am writing on behalf of {client_name} regarding the following matter."
+            role_instruction = "The letter is written by a layperson on behalf of someone else. Use third-person language, but avoid legal terminology or any reference to law firms."
         else:
             sender_identity = f"{client_name}\n{client_address}\n(c/o {user_name}, {user_address})"
             intro_line = f"I am writing on behalf of my client, {client_name}, regarding the following matter."
+            role_instruction = "The letter is written by a legal assistant working at a law firm. Use professional tone and include appropriate legal phrasing."
 
-        # Chain 1: Summarize the issue
+        # Chain 1: Summarize issue
         summary_prompt = PromptTemplate(
             input_variables=["description"],
             template="""
-Summarize the legal issue in 1-2 sentences clearly and formally.
+Summarize the legal issue in 1-2 sentences clearly and formally:
 
 Description: {description}
             """
         )
         summary_chain = LLMChain(llm=llm, prompt=summary_prompt, output_key="summary")
 
-        # Chain 2: Generate the letter
+        # Chain 2: Generate letter
         letter_prompt = PromptTemplate(
             input_variables=[
                 "summary", "sender_identity", "opponent_name", "opponent_address",
-                "letter_type", "topic", "event_date", "intro_line"
+                "letter_type", "topic", "event_date", "intro_line", "role_instruction"
             ],
             template="""
 You are a legal assistant.
 
-Draft a formal {letter_type} letter using the following details:
+Instructions:
+{role_instruction}
+
+Generate a formal {letter_type} based on the following:
 
 From:
 {sender_identity}
@@ -81,8 +95,8 @@ To:
 {opponent_name}
 {opponent_address}
 
-Topic: {topic}
-Date of Issue: {event_date}
+Topic: {topic}  
+Date of Issue: {event_date}  
 
 Opening:
 {intro_line}
@@ -90,26 +104,28 @@ Opening:
 Summary of the issue:
 {summary}
 
-Write a professional letter including:
-- Date and subject
-- Salutation
-- Body with background, demands, and any deadlines
+Write a clear and professional letter including:
+- Date and subject line
+- Proper salutation
+- Body with issue background, action requested, and any deadlines
 - Closing and polite sign-off
+Do not include placeholder text like [Law Firm Letterhead] or [Law Firm Name] unless specifically instructed.
             """
         )
+
         letter_chain = LLMChain(llm=llm, prompt=letter_prompt, output_key="letter")
 
-        # Combine both chains
+        # Full chain
         overall_chain = SequentialChain(
             chains=[summary_chain, letter_chain],
             input_variables=[
                 "description", "sender_identity", "opponent_name", "opponent_address",
-                "letter_type", "topic", "event_date", "intro_line"
+                "letter_type", "topic", "event_date", "intro_line", "role_instruction"
             ],
             output_variables=["summary", "letter"]
         )
 
-        # Run the chain
+        # Run
         result = overall_chain({
             "description": description,
             "sender_identity": sender_identity,
@@ -118,14 +134,15 @@ Write a professional letter including:
             "letter_type": letter_type,
             "topic": topic,
             "event_date": str(event_date),
-            "intro_line": intro_line
+            "intro_line": intro_line,
+            "role_instruction": role_instruction
         })
 
-        # Display output
         st.subheader("📄 Summary of Issue")
         st.write(result["summary"])
 
         st.subheader("📄 Generated Letter")
         st.code(result["letter"], language="markdown")
         st.download_button("Download as .txt", result["letter"], file_name="generated_letter.txt")
+
 
