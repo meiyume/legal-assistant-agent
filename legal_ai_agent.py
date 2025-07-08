@@ -56,7 +56,7 @@ Description: {description}
         letter_prompt = PromptTemplate(
             input_variables=[
                 "summary", "client_name", "client_address", "user_name", "user_address",
-                "opponent_name", "opponent_address", "letter_type", "topic", "event_date"
+                "opponent_name", "opponent_address", "letter_type", "topic", "event_date", "acting_as"
             ],
             template="""
 You are a legal assistant.
@@ -69,6 +69,9 @@ Draft a {letter_type} based on the following:
 - To: {opponent_name}
 - Opponent Address: {opponent_address}
 - Summary of Issue: {summary}
+
+If 'acting_as' is 'Myself', the letter should be written in first person ("I am writing...").
+If 'acting_as' is 'On behalf of a client', the letter should be written in third person ("I am writing on behalf of my client...").
 
 Write this as a formal letter with:
 - Date and subject
@@ -84,7 +87,7 @@ Write this as a formal letter with:
             chains=[summary_chain, letter_chain],
             input_variables=[
                 "description", "client_name", "client_address", "user_name", "user_address",
-                "opponent_name", "opponent_address", "letter_type", "topic", "event_date"
+                "opponent_name", "opponent_address", "letter_type", "topic", "event_date", "acting_as"
             ],
             output_variables=["summary", "letter"]
         )
@@ -100,7 +103,8 @@ Write this as a formal letter with:
             "opponent_address": opponent_address,
             "letter_type": letter_type,
             "topic": topic,
-            "event_date": str(event_date)
+            "event_date": str(event_date),
+            "acting_as": acting_as
         })
 
         # Display results
@@ -110,5 +114,3 @@ Write this as a formal letter with:
         st.subheader("📄 Generated Letter")
         st.code(result["letter"], language='markdown')
         st.download_button("Download as .txt", result["letter"], file_name="generated_letter.txt")
-
-
