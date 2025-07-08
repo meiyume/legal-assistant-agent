@@ -41,6 +41,7 @@ if st.button("Generate Letter"):
     if not (user_name and opponent_name and description and client_name and client_address):
         st.error("Please complete all required fields.")
     else:
+        # Chain 1: Summarize issue
         summary_prompt = PromptTemplate(
             input_variables=["description"],
             template="""
@@ -49,11 +50,14 @@ Summarize the legal issue in 1-2 sentences clearly and formally:
 Description: {description}
             """
         )
-
         summary_chain = LLMChain(llm=llm, prompt=summary_prompt, output_key="summary")
 
+        # Chain 2: Generate letter based on summary
         letter_prompt = PromptTemplate(
-            input_variables=["summary", "client_name", "client_address", "user_name", "user_address", "opponent_name", "opponent_address", "letter_type", "topic", "event_date"],
+            input_variables=[
+                "summary", "client_name", "client_address", "user_name", "user_address",
+                "opponent_name", "opponent_address", "letter_type", "topic", "event_date"
+            ],
             template="""
 You are a legal assistant.
 Draft a {letter_type} based on the following:
@@ -73,16 +77,20 @@ Write this as a formal letter with:
 - Closing statement and sign-off
             """
         )
-
         letter_chain = LLMChain(llm=llm, prompt=letter_prompt, output_key="letter")
 
+        # Sequential chain
         overall_chain = SequentialChain(
             chains=[summary_chain, letter_chain],
-            input_variables=["description", "client_name", "client_address", "user_name", "user_address", "opponent_name", "opponent_address", "letter_type", "topic", "event_date"],
+            input_variables=[
+                "description", "client_name", "client_address", "user_name", "user_address",
+                "opponent_name", "opponent_address", "letter_type", "topic", "event_date"
+            ],
             output_variables=["summary", "letter"]
         )
 
-        result = overall_chain.run({
+        # Run and capture output as dict
+        result = overall_chain({
             "description": description,
             "client_name": client_name,
             "client_address": client_address,
@@ -95,7 +103,12 @@ Write this as a formal letter with:
             "event_date": str(event_date)
         })
 
+        # Display results
+        st.subheader("📄 Summary of Issue")
+        st.write(result["summary"])
+
         st.subheader("📄 Generated Letter")
         st.code(result["letter"], language='markdown')
         st.download_button("Download as .txt", result["letter"], file_name="generated_letter.txt")
+
 
