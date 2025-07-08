@@ -7,7 +7,11 @@ import datetime
 
 # Load API key securely
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-llm = LangOpenAI(openai_api_key=st.secrets["OPENAI_API_KEY"], temperature=0.4)
+llm = LangOpenAI(
+    openai_api_key=st.secrets["OPENAI_API_KEY"],
+    temperature=0.4,
+    model_name="gpt-3.5-turbo"
+)
 
 # Page Config
 st.set_page_config(page_title="AI Legal Triage Agent", layout="wide")
