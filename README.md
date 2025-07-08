@@ -23,5 +23,5 @@ This is a lightweight AI-powered legal triage tool built with Streamlit and Open
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/legal-triage-agent.git
-cd legal-triage-agent
+git clone https://github.com/yourusername/legal-writer-agent.git
+cd legal-writer-agent
